@@ -34,6 +34,42 @@ keepdims=True)` example.
   - "Avoid `axis=None`": valid and useful for `ak.sum` / `ak.flatten`; the
     skill asks for a deliberate choice of axis instead.
 
+### Additional skills from the same source
+
+The following skills were also adapted from the IRIS-HEP marketplace (upstream
+commit `ca69e49`, same authors and license as above):
+
+- `skills/vector-awkward/`, from `iris-hep/skills/vector-awkward/`
+  - **Kept:** skill name; register behaviours → zip with `with_name` → use
+    `deltaR`, `+`/`.mass`, `boostCM_of_p4`.
+  - **Changed:** NanoAOD examples (muons, jets, MET as `Momentum2D`, nearest
+    jet, transverse mass, sums, boosts), tested with vector 1.4.0 (CMSSW) and
+    1.7.0 (pip). Corrected upstream statements: `Vector4D` with `px/py/pz/E`
+    fields has no `.pt` (use `Momentum4D`), and vector also works without
+    Awkward (`vector.array`, `vector.obj`). Added: records zipped before
+    `register_awkward()` never gain vector methods, and arithmetic drops extra
+    fields.
+- `skills/hist/`, from `iris-hep/skills/hist/`
+  - **Kept:** skill name, `Hist.new` axis/storage patterns, UHI indexing, the
+    categorical-axes example, and the plotting/labelling advice.
+  - **Changed:** CMS NanoAOD examples with `genWeight` (including negative
+    weights) and normalisation from `Runs/genEventSumw`, the CMS style and
+    `hep.cms.label` instead of the ATLAS style, ratio panels, and measured
+    NanoAOD ranges replacing ATLAS guesses. Tested with hist 2.7.2 / mplhep
+    0.3.47 (CMSSW) and hist 2.9.2 / mplhep 1.1.3 (pip). Corrected upstream
+    statements: `.fill` returns the histogram (not `None`), `histtype="bar"`
+    and `"barstep"` exist only in newer mplhep, the 2D example's
+    `mplhep.hist2dplot` after `import mplhep as hep`, the W mass (80.4 GeV, not
+    82), and the b-tag range (CMS scores are 0–1).
+- `skills/analysis-spec-builder/`, from `iris-hep/skills/analysis-spec-builder/`
+  - **Kept:** skill name, the draft → ask → iterate → write `specification.md`
+    workflow, the drafting rules, and the template's section structure.
+  - **Changed:** CMS template (DAS names, tier, era, Golden JSON, triggers,
+    MC normalisation, a new Corrections and Systematics section). Defaults are
+    NanoAOD, uproot/awkward/vector/hist, correctionlib and Combine, instead of
+    PHYSLITE, ServiceX and pyhf. The three examples were rewritten with real
+    CMS datasets, checked in DAS and against NanoAOD branches.
+
 **License:** BSD 3-Clause License
 
 ```text

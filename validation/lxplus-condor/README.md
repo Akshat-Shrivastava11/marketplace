@@ -15,7 +15,9 @@ directly with the LPC run.
 
 `crab` needs a grid certificate and a CMSSW area, so it is not covered here;
 it should be validated separately with a one-task PrivateMC or a short
-NanoAOD skim.
+NanoAOD skim. The same PR adds `af-fnal-lpc/cmsconnect-lpc`
+(production field notes); the LPC batch workflow itself is already validated
+by [validation/lpc-condor](../lpc-condor).
 
 ## Credits
 

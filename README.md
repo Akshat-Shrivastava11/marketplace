@@ -15,6 +15,7 @@ Type these in the Claude prompt. They are slash commands, not shell commands:
 /plugin install cms@cms-marketplace
 /plugin install hep-python-tools@cms-marketplace
 /plugin install af-fnal-lpc@cms-marketplace
+/plugin install af-cern-lxplus@cms-marketplace
 ```
 
 ### From a terminal
@@ -24,6 +25,7 @@ claude plugin marketplace add cms-ml/marketplace          # or a local clone: /p
 claude plugin install cms@cms-marketplace
 claude plugin install hep-python-tools@cms-marketplace
 claude plugin install af-fnal-lpc@cms-marketplace         # LPC users: condor batch jobs
+claude plugin install af-cern-lxplus@cms-marketplace      # lxplus users: lxbatch, EOS, CRAB
 claude plugin list                                        # each should show "enabled"
 ```
 
@@ -151,6 +153,21 @@ resumes from what exists:
 <!-- GENERATED:START -->
 
 ## Plugins
+
+### `af-cern-lxplus` (v0.1.0)
+
+Skills for CMS work on CERN lxplus: driving lxplus over ssh, HTCondor batch (lxbatch, CPU and GPU, EosSubmit), EOS and xrootd storage, and CRAB grid submission.
+
+**Skills:**
+
+| Skill             | Use when                                                                                                       |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- |
+| `crab`            | CRAB on EL9: setup, sizing, sites, exit codes, recovery tasks, CRAB as a backend for law/combine fits          |
+| `eos-xrootd`      | EOS and xrootd at CERN and FNAL: URLs, verified copies, FUSE pitfalls, quotas, recycle-bin etiquette           |
+| `lxplus-access`   | Reaching lxplus from agents: Kerberos, node pinning, node-local /tmp, killed background processes, shell traps |
+| `lxplus-htcondor` | CERN lxbatch HTCondor: where to submit, memory/CPU/GPU sizing, flavours, holds, EosSubmit, robust stage-out    |
+
+---
 
 ### `af-fnal-lpc` (v0.1.0)
 

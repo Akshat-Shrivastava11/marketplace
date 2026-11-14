@@ -17,7 +17,8 @@ CREDITS.md                          # attribution for third-party teaching mater
 ```
 
 Plugins: `cms` (core: CMSSW, data tools, and the Scikit-HEP stack with CMS
-examples, e.g. `awkward-array`), `af-fnal-lpc` (LPC facility: `lpc-condor`),
+examples, e.g. `awkward-array`), `af-fnal-lpc` (LPC facility: `lpc-condor`,
+`cmsconnect-lpc`),
 `af-cern-lxplus` (CERN lxplus: `lxplus-access`, `lxplus-htcondor`,
 `eos-xrootd`, `crab`) and `hep-python-tools` (experiment-neutral dev tooling: `standalone-script`,
 `cli-creator`) exist. Planned: `cms-ml` (weaver training, ONNX/TF/SONIC

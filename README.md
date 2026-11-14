@@ -169,15 +169,16 @@ Skills for CMS work on CERN lxplus: driving lxplus over ssh, HTCondor batch (lxb
 
 ---
 
-### `af-fnal-lpc` (v0.1.0)
+### `af-fnal-lpc` (v0.2.0)
 
-Skills for the CMS LPC analysis facility at Fermilab (cmslpc): HTCondor batch jobs on the LPC pool with inputs and outputs over XRootD/EOS.
+Skills for the CMS LPC analysis facility at Fermilab (cmslpc): HTCondor batch jobs on the LPC pool with inputs and outputs over XRootD/EOS, plus field notes for large productions on the LPC pool and CMS Connect.
 
 **Skills:**
 
-| Skill        | Use when                                                                                        |
-| ------------ | ----------------------------------------------------------------------------------------------- |
-| `lpc-condor` | HTCondor batch jobs on cmslpc with XRootD in, EOS out, check and resubmit (tested on real jobs) |
+| Skill            | Use when                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `cmsconnect-lpc` | CMS Connect and FNAL LPC condor field notes: wrapper traps, microarch, site vetoes, large GEN productions, FNAL EOS |
+| `lpc-condor`     | HTCondor batch jobs on cmslpc with XRootD in, EOS out, check and resubmit (tested on real jobs)                     |
 
 ---
 

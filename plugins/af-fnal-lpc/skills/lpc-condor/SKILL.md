@@ -192,6 +192,9 @@ reading `root://cmseos.fnal.gov//...` directly.
 - **CMSSW's Python is old for fitting** (CMSSW_15_0_21 has iminuit 1.2), so
   prefer the LCG view for pure-Python analysis.
 
+For large productions on the LPC pool or CMS Connect (site vetoes,
+microarchitecture, premix, schedd throttling), see the `cmsconnect-lpc` skill.
+
 ## Reference Files
 
 - [assets/payload.py](assets/payload.py): copy and edit for a new analysis.

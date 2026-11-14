@@ -29,8 +29,8 @@
     },
     {
       "name": "af-fnal-lpc",
-      "description": "Skills for the CMS LPC analysis facility at Fermilab (cmslpc): HTCondor batch jobs on the LPC pool with inputs and outputs over XRootD/EOS.",
-      "version": "0.1.0",
+      "description": "Skills for the CMS LPC analysis facility at Fermilab (cmslpc): HTCondor batch jobs on the LPC pool with inputs and outputs over XRootD/EOS, plus field notes for large productions on the LPC pool and CMS Connect.",
+      "version": "0.2.0",
       "source": "./plugins/af-fnal-lpc",
       "keywords": [
         "CMS",
@@ -41,7 +41,9 @@
         "HTCondor",
         "batch jobs",
         "EOS",
-        "XRootD"
+        "XRootD",
+        "CMS Connect",
+        "private MC production"
       ]
     },
     {

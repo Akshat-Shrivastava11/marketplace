@@ -40,6 +40,7 @@ volume (the account has none), and FNAL EOS instead of eosuser.
 ## Fixed after run1 and run2
 
 `lxplus-htcondor`:
+
 - Submitting without an AFS work volume (AFS home works).
 - Dry run: working form `condor_submit -dry-run /dev/stdout x.sub`; it does not
   show the schedd's memory/CPU transforms.
@@ -50,6 +51,7 @@ volume (the account has none), and FNAL EOS instead of eosuser.
 - Log paths are relative to `initialdir`.
 
 `eos-xrootd`:
+
 - Full byte quota (`vol-status exceeded`, `[3021]`) is a hard stop, not a retry.
 - `eos quota` without `EOS_MGM_URL` answers `no quota for path`.
 - FNAL quota: `eosquota` on cmslpc.
@@ -57,6 +59,7 @@ volume (the account has none), and FNAL EOS instead of eosuser.
 - Moving a proxy between sites only at the user's direction, into a private dir.
 
 `lxplus-access`:
+
 - The 2FA symptom (`gssapi-with-mic` "partial success"), a working
   `lxtunnel` ControlMaster config, and the node-local socket caveat.
 - Accounts without a work volume.

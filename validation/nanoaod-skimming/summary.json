@@ -8,7 +8,7 @@
     "n_ls": 2852,
     "lumi_pb": 490.388,
     "input_bytes": 7519298354,
-    "skim_bytes": 151752505
+    "skim_bytes": 151752565
   },
   "mc": {
     "n_files": 3,
@@ -17,12 +17,12 @@
     "merged_entries": 385701,
     "sumw_runs_original": 48548790310.0,
     "sumw_runs_merged_skim": 48548790310.0,
-    "sumw_read": 48548782080.0,
+    "sumw_read": 48548789980.0,
     "neg_weight_fraction": 0.1581510029789915,
     "xsec_pb": 6077.22,
     "weight_factor": 6.13856e-5,
     "input_bytes": 3630445193,
-    "skim_bytes": 96474959
+    "skim_bytes": 96475019
   },
   "golden_2016_lumi_fb": 36.3138,
   "z_peak": {

@@ -47,9 +47,9 @@ Steps:
 3. Bookkeeping: `sumw.py` on the original MC files and on the merged MC skim (must agree), `lumi.py` on the
    merged data skim, and `lumi.py --golden` for the whole year as a cross-check.
 4. Physics check: in both merged skims select events with two opposite-charge tight-ID muons
-   (pT > 26 and > 20 GeV, |eta| < 2.4, `Muon_pfRelIso04_all < 0.15`) and count events with 81 < m_mumu < 101 GeV.
-   Normalise MC with genWeight _ xsec _ lumi / SUMW. No scale factors or pileup weights.
-   Plot m_mumu (60-120 GeV) data vs MC with a ratio panel to `plots/mmumu.png` and `.pdf`
+   (pT > 26 and > 20 GeV, |eta| < 2.4, `Muon_pfRelIso04_all < 0.15`) and count events with `81 < m_mumu < 101` GeV.
+   Normalise MC with `genWeight * xsec * lumi / SUMW`. No scale factors or pileup weights.
+   Plot `m_mumu` (60-120 GeV) data vs MC with a ratio panel to `plots/mmumu.png` and `.pdf`
    (use the `cms:hist` skill; label "CMS Open Data").
 5. Write `summary.json` with exactly these keys (numbers, not strings):
 

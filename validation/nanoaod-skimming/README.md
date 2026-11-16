@@ -75,7 +75,11 @@ From [SKILLS_USED.md](SKILLS_USED.md), fixed in the skill after the run:
   every number in `summary.json`.
 - `skim.py` summed float32 `genWeight` in float32, so `SUMW_READ` differed
   from the Runs sum by 2e-7. It now sums in float64 (difference 7e-9).
-  The committed logs predate this change.
+- A final review found that `skim.py` crashed when a counter (`nMuon`) was
+  kept next to its collection, which includes the keep-everything default,
+  and that a failed job left a readable partial output. Counters are now
+  regenerated, and the output is written as `<output>.part` and renamed on
+  success. The chain was rerun with the final scripts.
 
 Not changed here: the `hist` skill's example label is "Preliminary", which
 conflicts with the Open Data labelling rule. The agent could not load the

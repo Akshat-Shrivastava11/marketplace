@@ -43,7 +43,8 @@ marketplace (a git repo: cms-ml/marketplace)
 Read it bottom-up: you write skills and subagents, package them into a
 plugin, and publish plugins through a marketplace. Plugins here: `cms`
 (physics and data tools: CMSSW, the Scikit-HEP stack, analysis workflows),
-`af-fnal-lpc` (the LPC facility), `hep-python-tools` (experiment-neutral
+`af-fnal-lpc` (the LPC facility), `af-cern-lxplus` (CERN lxplus: batch,
+EOS, CRAB), `hep-python-tools` (experiment-neutral
 Python tooling).
 
 ## 2. Which feature do I use?

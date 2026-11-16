@@ -1,0 +1,17 @@
+# Test job (1 of the 5 allowed): same wrapper, label test, files of job 0.
+universe                = vanilla
+executable              = /afs/cern.ch/user/<u>/<user>/cms-marketplace-tests/lxplus-condor-haiku-run2-2026-11-15/run_job.sh
+arguments               = test root://eospublic.cern.ch//eos/opendata/cms/Run2016G/JetHT/NANOAOD/UL2016_MiniAODv2_NanoAODv9-v1/130000/CD205112-3009-AB40-ACE1-9C3C31285B4A.root root://eospublic.cern.ch//eos/opendata/cms/Run2016G/JetHT/NANOAOD/UL2016_MiniAODv2_NanoAODv9-v1/260000/0673B754-2FF9-A247-B862-C4F2F1EF6673.root
+transfer_input_files    = payload.py
+should_transfer_files   = YES
+when_to_transfer_output = ON_EXIT
+transfer_output_files   = ""
+request_cpus            = 1
+request_memory          = 1000
+request_disk            = 6000000
++JobFlavour             = "espresso"
+MY.SendCredential       = True
+output                  = logs/test_$(ClusterId).$(ProcId).out
+error                   = logs/test_$(ClusterId).$(ProcId).err
+log                     = logs/test_$(ClusterId).$(ProcId).log
+queue

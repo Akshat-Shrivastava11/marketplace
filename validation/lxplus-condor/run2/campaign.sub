@@ -1,0 +1,18 @@
+# Campaign: 4 jobs, 2 files each. Standard schedd, submitted from AFS.
+universe                = vanilla
+executable              = /afs/cern.ch/user/<u>/<user>/cms-marketplace-tests/lxplus-condor-haiku-run2-2026-11-15/run_job.sh
+arguments               = $(Label) $(In1) $(In2)
+initialdir              = /afs/cern.ch/user/<u>/<user>/cms-marketplace-tests/lxplus-condor-haiku-run2-2026-11-15
+transfer_input_files    = payload.py
+should_transfer_files   = YES
+when_to_transfer_output = ON_EXIT
+transfer_output_files   = ""
+request_cpus            = 1
+request_memory          = 1000
+request_disk            = 6000000
++JobFlavour             = "espresso"
+MY.SendCredential       = True
+output                  = logs/$(Label)_$(ClusterId).$(ProcId).out
+error                   = logs/$(Label)_$(ClusterId).$(ProcId).err
+log                     = logs/$(Label)_$(ClusterId).$(ProcId).log
+queue Label,In1,In2 from jobs.txt

@@ -1,0 +1,84 @@
+{
+  "run": "lxplus_condor_haiku run1",
+  "date": "2026-11-16 (local CET; test job times are CERN local)",
+  "status": "BLOCKED at stage-out: EOS user quota exhausted. Full 4-job campaign NOT submitted.",
+  "environment": {
+    "launch_host": "FNAL cmslpc (off-site for CERN)",
+    "lxplus_node": "lxplus947.cern.ch (ssh via lxtunnel ControlMaster, alive)",
+    "kerberos": "klist -s rc=0",
+    "work_dir": "<AFS home>/cms-marketplace-tests/lxplus-condor-haiku-2026-11-15 (no AFS work volume)",
+    "eos_output_dir": "root://eosuser.cern.ch//eos/user/<u>/<user>/cms-marketplace-tests/lxplus-condor/"
+  },
+  "software": {
+    "cvmfs_view": "/cvmfs/sft.cern.ch/lcg/views/LCG_108/x86_64-el9-gcc13-opt/setup.sh",
+    "python": "3.12.11",
+    "ROOT": "6.36.02",
+    "uproot": "5.6.0",
+    "awkward": "2.8.1"
+  },
+  "input": {
+    "dataset": "/Run2016G/JetHT/NANOAOD/UL2016_MiniAODv2_NanoAODv9-v1 (root://eospublic.cern.ch//eos/opendata/cms/...)",
+    "files_selected": 8,
+    "selection_rule": "first 8 .root paths from xrdfs ls -R, sorted by path",
+    "jobs_planned": 4,
+    "files_per_job": 2,
+    "events_per_file": 20000
+  },
+  "selection": "per file: count events with HLT_PFHT900 fired; count events with >=2 jets (Jet_pt > 500 GeV)",
+  "schedd": "bigbird08.cern.ch (default schedd, from condor_submit)",
+  "clusters": {
+    "test_job": {
+      "cluster_id": 21003704,
+      "procs": 1,
+      "status": "completed (Normal termination, return value 5 = STAGEOUT_FAIL)",
+      "payload_rc": 0,
+      "payload_wall_s": 8,
+      "condor_execute_to_terminate": "01:12:09 to 01:14:39 (150 s)",
+      "resubmissions": 0
+    },
+    "campaign": {
+      "cluster_id": null,
+      "procs": 0,
+      "status": "not submitted: a campaign run would fail at stage-out until EOS quota is freed (see test_job)"
+    }
+  },
+  "memory": {
+    "local_measurement": {
+      "method": "/usr/bin/time -v on 1 file, 20000 events, lxplus node",
+      "max_rss_mb": 96,
+      "wall_s": 1.8
+    },
+    "requested_at_submit_mb": 1000,
+    "after_schedd_mb": 3000,
+    "job_MemoryUsage_mb": 68,
+    "allocated_mb": 3000,
+    "request_cpus": 1
+  },
+  "counts": {
+    "note": "Only the test job ran the payload on condor. Its counts come from its stdout (the JSON never reached EOS). These are NOT merged campaign totals and were not compared to the LPC run.",
+    "test_job_proc0": {
+      "files": [
+        {"file": "CD205112-3009-AB40-ACE1-9C3C31285B4A.root", "n_events": 20000, "n_HLT_PFHT900": 2297, "n_ge2jets_pt500": 325},
+        {"file": "0673B754-2FF9-A247-B862-C4F2F1EF6673.root", "n_events": 20000, "n_HLT_PFHT900": 3000, "n_ge2jets_pt500": 428}
+      ],
+      "total": {"n_events": 40000, "n_HLT_PFHT900": 5297, "n_ge2jets_pt500": 753}
+    },
+    "procs_1_to_3": "not run on condor",
+    "campaign_total": "not available"
+  },
+  "output_staging": {
+    "result": "FAILED for all 6 retries",
+    "error": "[3021] Unable to get quota space - quota not defined or exhausted; Disk quota exceeded (destination)",
+    "eos_quota_check": "eos quota (EOS_MGM_URL=root://eosuser.cern.ch): project group 2.01 TB used vs 1.00 TB logical, filled 100%, status exceeded",
+    "size_adler32_check": "not reached"
+  },
+  "comparison_with_lpc": {
+    "agree": "not evaluated",
+    "reason": "Campaign outputs were not merged. validation/lpc-condor/run2/summary.json was deliberately not read, per the brief gate."
+  },
+  "next_steps_for_user": [
+    "Free space in the EOS user area (quota is 1 TB logical and is exceeded), or point the output at a writable area.",
+    "Then rerun: submit campaign.sub (4 jobs) and check that the four job_N.json files appear at the EOS output dir.",
+    "Stray test artifacts: none on EOS (stage-out failed). Test logs are in run1/test_job_logs/."
+  ]
+}

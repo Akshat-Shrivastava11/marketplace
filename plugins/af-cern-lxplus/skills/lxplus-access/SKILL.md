@@ -40,6 +40,25 @@ practice; where sessions disagreed, both observations are kept.
 
 - Non-interactive ssh: `ssh -T -o BatchMode=yes -o PreferredAuthentications=gssapi-with-mic -o GSSAPIDelegateCredentials=yes <user>@lxplus.cern.ch`, after `kinit <user>@CERN.CH` on the local machine. Wrap every ssh in `timeout`, so it fails fast instead of hanging on a prompt.
 - Off-site machines that get a 2FA prompt: hop through `lxtunnel.cern.ch` (`ssh -J`) with GSSAPI and a ControlMaster on the jump alias only. Check that the master is alive with `ssh -O check <jump>`. An agent can't answer 2FA, so if the master is down the user opens it.
+  - Symptom: `-v` shows `Authenticated using "gssapi-with-mic" with partial success`, then `Permission denied (publickey,keyboard-interactive)`: Kerberos was accepted, the second factor is missing.
+  - Config that worked from cmslpc (Nov 2026); the user runs `ssh -fN lxtunnel` once (password and OTP may be asked even with a valid ticket), then agents use `ssh lxplus9NN.cern.ch` non-interactively:
+    ```
+    Host lxtunnel
+        HostName lxtunnel.cern.ch
+        User <user>
+        GSSAPIAuthentication yes
+        GSSAPIDelegateCredentials yes
+        ControlMaster auto
+        ControlPath /tmp/ssh-cm-%u-%r@%h:%p
+        ControlPersist 12h
+    Host lxplus*.cern.ch
+        User <user>
+        ProxyJump lxtunnel
+        GSSAPIAuthentication yes
+        GSSAPIDelegateCredentials yes
+    ```
+  - Keep `ControlPath` on local disk (`/tmp`), not NFS/AFS. That makes the master node-local: the agent must run on the same login node as the user's `ssh -fN`. The master can drop before `ControlPersist` (logout, node cleanup); re-check before each batch of work.
+  - A dead master with `BatchMode` off shows `ssh_askpass: exec(...): No such file or directory` and `Too many authentication failures`. Stop and ask the user to reopen it.
 - `Could not resolve hostname lxplus.cern.ch.cern.ch`: the local ssh config appends the domain. Use the `lxplus` alias.
 - "Too many authentication failures": too many keys are offered; restrict `PreferredAuthentications`.
 - `".bashrc: Permission denied"`, or condor 401 on a node: no AFS token. Reconnect with `GSSAPIDelegateCredentials=yes`, or run `aklog`.
@@ -71,6 +90,7 @@ practice; where sessions disagreed, both observations are kept.
 ## Quotas on login areas
 
 - AFS work dirs fill quickly (~95% seen). Keep code and logs on AFS and outputs on EOS.
+- Some accounts have no work volume (`/afs/cern.ch/work/<u>/<user>` doesn't exist). Use the AFS home for small runs (`fs lq ~`, ~2 GB), and suggest the user request a work volume for anything bigger.
 - AFS directories hold ~32k entries; use per-step log subdirectories.
 - LPC: `$HOME` ~3 GB, `/uscms_data` 200 GB soft for all projects.
 

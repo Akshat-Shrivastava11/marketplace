@@ -1,7 +1,7 @@
 {
   "name": "af-cern-lxplus",
   "description": "Skills for CMS work on CERN lxplus: driving lxplus over ssh, HTCondor batch (lxbatch, CPU and GPU, EosSubmit), EOS and xrootd storage, and CRAB grid submission.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://batchdocs.web.cern.ch/",
   "repository": "https://github.com/cms-ml/marketplace",
   "license": "MIT",

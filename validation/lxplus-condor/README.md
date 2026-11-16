@@ -1,9 +1,11 @@
 # Validation: `af-cern-lxplus`
 
-**Status: pending.** The task in [PROMPT.md](PROMPT.md) will be run by an
-agent on lxplus; its `summary.json`, `SKILLS_USED.md` and a
-`check_results.py` will be added to this directory before the plugin is
-considered validated.
+**Status: validated** (`lxplus-access`, `lxplus-htcondor`, `eos-xrootd`),
+Nov 2026. The task in [PROMPT.md](PROMPT.md) was run by Claude Haiku with no
+other context, reading only the three skill files, from an FNAL cmslpc node
+that drove lxplus over ssh through an `lxtunnel` ControlMaster. Results and
+fixes: [RESULTS.md](RESULTS.md). `python3 check_results.py` repeats the
+comparison with the LPC reference.
 
 ## Goal
 

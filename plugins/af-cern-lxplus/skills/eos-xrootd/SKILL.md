@@ -55,6 +55,7 @@ practice; where sessions disagreed, both observations are kept.
 
 - Pattern: `xrdfs <host> mkdir -p <dir>` (xrdcp into a missing dir fails, unless you pass `--path`), then `xrdcp -f -s --posc --cksum adler32 <src> <dst>`, with a retry loop (e.g. 6 tries, 20 s apart).
 - Verify each file after copying: remote size (`xrdfs stat`) and checksum (`xrdfs query checksum` vs local `xrdadler32`). Log OK, MISMATCH or COPYFAIL per file and end with `DONE nbad=N`.
+- `xrdadler32` is in `/usr/bin` on lxplus but not in the LCG views (LCG_106 checked), so don't assume it in jobs. Where it's missing: `python3 -c "import zlib,sys; print('%08x' % zlib.adler32(open(sys.argv[1],'rb').read()))" <file>` (whole-file read; fine for small outputs).
 - Bulk moves: `xrdcp -r --parallel 16 root://eosuser...//src root://eoscms...//dst`. Compare file count and bytes on both sides before deleting the source. Copying and deleting the source are separate approvals.
 - Cross-site (IHEP → FNAL): `xrdcp --cksum adler32:source --posc --path --retry 2`. Skip files already present at the right size. Try the site endpoint before `cms-xrd-global`.
 - `scp` onto /eos keeps the local mode (0600 files end up unreadable to others); xrdcp gives 0644. Check modes on other people's areas too: listable is not readable.
@@ -64,7 +65,9 @@ practice; where sessions disagreed, both observations are kept.
 
 ## Quotas
 
-- Check: `eos quota <path>` (or `eos quota -m`). EOS shows raw bytes at 2× logical; the enforced number is used/max **logical** bytes. The user quota binds even inside a large group quota.
+- Check: `EOS_MGM_URL=root://eosuser.cern.ch eos quota <path>` (eoscms for /eos/cms; or `eos quota -m`). Without the right `EOS_MGM_URL` it answers `error: no quota for path ...`, which doesn't mean there is no quota. EOS shows raw bytes at 2× logical; the enforced number is used/max **logical** bytes. The user quota binds even inside a large group quota.
+- FNAL EOS: `eosquota` on a cmslpc node (no CERN-side command).
+- **Full quota is a hard stop.** `vol-status exceeded` (100% filled) makes every write fail with `[3021] Unable to get quota space ... Disk quota exceeded`. Retrying doesn't help. Check quota before submitting; if a test job hits this, stop, don't submit the campaign, and ask the user to free space or pick another area (e.g. FNAL EOS with a proxy; see `lxplus-htcondor` credentials). Never delete the user's files to make room.
 - `/eos/cms/store/user/<u>`: 1 TB logical. When it's full, CRAB stageout fails (HTTP 507 / exit 60323) and new tasks come back SUBMITREFUSED.
 - `/eos/user` (1 TB) filled from unrelated folders and killed jobs at their final copy. Check before long runs, and copy partial outputs as you go.
 - Group areas may have no per-user quota, which suits archives. Some are **write-once** (ACL `rw!d`, e.g. phys_bphys; phys_generator): members can create but not delete. Never put test files or write probes there.
@@ -84,7 +87,7 @@ practice; where sessions disagreed, both observations are kept.
 - Cron uses `FILE:/tmp/krb5cc_<uid>`, and tickets renew for at most 5 days, so plan a manual `kinit` (or a keytab).
 - Grid proxies for xrootd: keep one on AFS/EOS readable from where it's used (`chmod 600`), and set `X509_USER_PROXY` to it, not `/tmp/x509up_u*` (node-local). Check both `voms-proxy-info -timeleft` and `-actimeleft`.
 - `xrdfs stat` succeeds even with an expired proxy. Test real access by opening a file.
-- Never copy grid proxies or keys between sites or into shared places.
+- Never copy grid proxies or keys between sites or into shared places on your own. Prefer `voms-proxy-init` where the proxy is used; if the user decides to move one (e.g. LPC → lxplus for FNAL writes), put it in a private AFS dir (`~/private`, `chmod 600`) and tell them where it is so they can delete it.
 
 ## Gotchas
 
@@ -95,7 +98,7 @@ More field notes, each from a real failure.
 - **IPv4:** from a laptop or desktop, set `XRD_NETWORKSTACK=IPv4`. eoscms resolved IPv6 first, which went over slow WiFi and was ~50× slower.
 - **uproot over root://** needs `fsspec-xrootd`. For large reads use `handler=uproot.source.xrootd.MultithreadedXRootDSource`, because the fsspec backend timed out mid-stream. For one-off reads, xrdcp locally first.
 - **Print a remote file:** `xrdcp -s -f root://.../file -` (writing to `/dev/stdout` fails). FUSE `ls` on /eos/cms can hang; `xrdfs ... ls -l` is safer, and its times are UTC.
-- **Inode quotas:** these are per group node and shared. Per-chunk dumps created 46M files and nearly filled a shared node (`[3021] Unable to get quota space`). Before a campaign, count a canary job's files (`eos find --count`) × number of jobs, compare with `eos quota ls -m`, and write one merged file per job.
+- **Inode quotas:** these are per group node and shared. Per-chunk dumps created 46M files and nearly filled a shared node (`[3021] Unable to get quota space`; the same error comes from a full byte quota, see Quotas). Before a campaign, count a canary job's files (`eos find --count`) × number of jobs, compare with `eos quota ls -m`, and write one merged file per job.
 - **Listing caps:** `eos find` and an unscoped `eos recycle ls` stop at 100k entries; use `eos recycle ls -m <YYYY/MM/DD>`.
 - **Symlinked areas:** `/store/user/<x>` or `/store/group/<g>` can be EOS symlinks, and `xrdfs ls -l` on the link shows a tiny root-owned file. List a path below it.
 - **Start-burst errors:** `Operation expired` at file open hits bursts of hundreds of jobs. Frameworks with `--skipbadfiles`-style validation drop the file and exit 0 (5.6k of 59k files lost in one pass). Grep for the validation errors, compare processed with input files, and recover only the dropped ones.

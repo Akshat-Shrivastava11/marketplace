@@ -40,6 +40,7 @@ practice; where sessions disagreed, both observations are kept.
 ## Where to submit from
 
 - **Default:** submit from AFS (`/afs/cern.ch/work/...`) on the standard schedd. The standard schedds refuse `/eos` paths in the submit file.
+- **No work volume?** Not every account has one (`ls -d /afs/cern.ch/work/<u>/<user>` fails; request it at the CERN resources portal). Submitting from the AFS home works (validated Nov 2026); check `fs lq ~` first, since the home is small (~2 GB).
 - **The job itself:** make it self-contained. Software from CVMFS, code as a tarball (or git clone), small inputs embedded, and an explicit `xrdcp` of the outputs to EOS at the end, with `transfer_output_files = ""` when nothing should come back.
 - **EosSubmit** (`module load lxbatch/eossubmit`, submit from an `/eos` dir): reports are mixed.
   - Several sessions saw every job held at input transfer: `FILETRANSFER: plugin for type root not found` (HoldReasonCode 13, subcode 11). Some workers (including GPU nodes) lack the xrootd plugin. `should_transfer_files = NO` doesn't help, because the schedd rewrites the executable to `root://`.
@@ -49,9 +50,9 @@ practice; where sessions disagreed, both observations are kept.
     - no directories in `transfer_input_files` (send tarballs);
     - `queue` can't sit inside `if/else`.
   - If you use it, add `periodic_release = (HoldReasonCode == 12 || HoldReasonCode == 13) && (NumJobStarts < 10)`, and expect churn.
-- **`requirements` is overwritten** by the CERN schedd (only Hostgroup/PreLocalRequirements survive). A `stringListMember("root", HasFileTransferPluginMethods)` guard never applies. GPU-model `requirements` (`TARGET.GPUs_DeviceName =?= "NVIDIA H100 NVL"`) were reported to work. Check what was kept with `condor_q <id> -af Requirements`.
+- **`requirements` is overwritten** by the CERN schedd (only Hostgroup/PreLocalRequirements survive). A `stringListMember("root", HasFileTransferPluginMethods)` guard never applies. GPU-model `requirements` (`TARGET.GPUs_DeviceName =?= "NVIDIA H100 NVL"`) were reported to work. Check what was kept with `condor_q <id> -l | grep '^Requirements'`; `condor_q <id> -af Requirements` printed `false` (it evaluates the expression instead of showing it).
 - **Kerberos in jobs:** `MY.SendCredential = True` forwards a krb5 ccache. Don't `export XrdSecPROTOCOL=krb5` (spurious `[3012] Unable to open file; Bad address`); let xrdcp negotiate. DAG POST scripts run on the schedd without that ccache, so EOS I/O there silently does nothing.
-- **Dry run:** `condor_submit -dry-run - x.sub` shows the resolved ads. Run one short test job before any campaign.
+- **Dry run:** `condor_submit -dry-run /dev/stdout x.sub` prints the job ads without submitting (`-dry-run` takes an output file, and the submit file must still be named: `condor_submit -dry-run - < x.sub` fails with "No submit filename was provided"). It shows the ads _before_ the schedd's transforms, so a memory or CPU raise only appears in `condor_q <id> -af RequestMemory RequestCpus` after submitting. Run one short test job before any campaign.
 
 ## Sizing (the biggest source of idle jobs)
 
@@ -59,7 +60,8 @@ practice; where sessions disagreed, both observations are kept.
   - 32 GB became 11 CPUs and matched 1 slot of 5214; 14 GB matched at once.
   - 150 GB became 50 CPUs and could never match on 28-CPU GPU nodes.
   - Asking 4 CPU / 6 GB for single-threaded cmsRun matched 122 of 4647 slots; 1 CPU / 3 GB matched 393.
-- **Bid from measurement:** use `condor_history <id> -af MemoryUsage`, or the "Partitionable Resources" table in the job log. Never bid defensively.
+- **Bid from measurement:** before the first job, run the payload once on lxplus on one job's inputs under `/usr/bin/time -v` and read "Maximum resident set size" (KB). After jobs ran, use the "Partitionable Resources" table in the job log, or `condor_history <id> -af MemoryUsage` (which can hang for minutes; the log is faster). Never bid defensively.
+- **Small requests are raised too:** `request_memory = 1000` was queued as 3000 MB (Nov 2026), with `RequestCpus` still 1. Below ~3 GB, bidding lower doesn't buy faster matching.
 - **Fix idle jobs in place:** `condor_qedit <cluster> RequestMemory 2500`. Use only the cluster id you just submitted: a constraint-based `condor_qedit` once rewrote 9,567 unrelated jobs. Preview the count and owners before any bulk qedit, rm or hold.
 - **The schedd can raise RequestMemory after submit** (16000 → 24000 seen), which then never matches a GPU slot. Check with `condor_q <id> -af RequestMemory`.
 - **Exceeding `request_memory` holds the job via the cgroup**, even after its useful work is done. Split memory-heavy post-steps into their own job. Pin the application's own parallelism (MadGraph without `nb_core` used every core of the node and blew the limit).
@@ -142,6 +144,8 @@ More field notes, each from a real failure.
 - AFS: ~33–40k entries per directory, then every create fails with `errno 27 File too large`. AFS is write-on-close: a file being written on node A reads as empty on node B. `cp dir/*` hits "argument list too long" at ~2 MB.
 - `condor_prio` only orders one user's jobs; raising one campaign starves your others.
 - Credentials: kinit plus `MY.SendCredential = True` is enough for CERN EOS from jobs (credmon renews it). A voms proxy is only needed for non-CERN storage. Jobs keep running ~31 h after the submitter's ticket expires.
+- Writing to non-CERN storage (e.g. FNAL EOS, `root://cmseos.fnal.gov//store/user/<user>/...`) from lxbatch: keep the proxy on AFS (`chmod 600`), keep `MY.SendCredential = True`, and `export X509_USER_PROXY=<afs path>` in the job script; the worker reads it through the forwarded AFS token (validated Nov 2026). Check `voms-proxy-info -timeleft` covers the campaign.
+- Output and error paths (`output`, `error`, `log`) are relative to the submit directory (`initialdir`), and their directories must exist.
 
 ## Docs
 

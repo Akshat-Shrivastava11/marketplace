@@ -154,7 +154,7 @@ resumes from what exists:
 
 ## Plugins
 
-### `af-cern-lxplus` (v0.1.0)
+### `af-cern-lxplus` (v0.1.1)
 
 Skills for CMS work on CERN lxplus: driving lxplus over ssh, HTCondor batch (lxbatch, CPU and GPU, EosSubmit), EOS and xrootd storage, and CRAB grid submission.
 

@@ -78,7 +78,9 @@ by a large factor.
 
 **LHE variations.** The Runs `LHEScaleSumw[i]` and `LHEPdfSumw[i]` are stored
 **divided by that file's `genEventSumw`**. To combine files, weight each by
-its `genEventSumw` (`sumw.py` does this). The scale weights are then used to
+its `genEventSumw` (`sumw.py` does this). For the usual 9 scale weights the
+nominal (muR = muF = 1) is index 4 and the central PDF is index 0: both
+equal `SUMW` after combining, which is a quick check. The scale weights are then used to
 separate a normalisation effect from a shape effect, see the systematics
 skills.
 
@@ -86,7 +88,10 @@ skills.
 lumi sections that were actually processed, of the recorded luminosity
 from brilcalc `--byls`. If a job failed, its lumi sections are not in any
 output LuminosityBlocks tree, so `lumi.py -i` on the skims gives the right
-number automatically. The year total (e.g. 36.31 /fb for 2016 UL) is only
+number automatically. It counts each (run, lumi section) once, so a lumi
+section split across two input files is not double-counted. A skim's
+LuminosityBlocks lists every processed lumi section, including those where
+no event passed the cut, as it should. The year total (e.g. 36.31 /fb for 2016 UL) is only
 right when every file was processed.
 
 ## Canonical Patterns
@@ -117,7 +122,8 @@ python3 scripts/skim.py \
 The `--cut` is a Python expression over branch names with `ak` and `np`.
 Branches it needs are read even if not kept. Use `&`, `|`, `~` (not `and`,
 `or`). Per-object cuts go through `ak.sum(..., axis=1)` or `ak.any`.
-`--lumi-json` is ignored for MC. The output is a valid NanoAOD-style
+`--lumi-json` takes a local file (download the golden JSON first) and is
+ignored for MC. The output is a valid NanoAOD-style
 file: collections are written with `n<Coll>` counters, so ROOT, coffea's
 NanoEvents and the other skills read it unchanged.
 
@@ -174,9 +180,11 @@ publishes the CSV for each year.
 ## Gotchas
 
 - **MC normalised by events instead of Σ genEventSumw** gives a wrong
-  scale. In 2016 UL amcatnlo DY, 16% of `genWeight` values are negative,
-  so dividing by the event count instead of Σ genEventSumw is off by a
-  factor of about 1.5. `N_EFF` from `sumw.py` is
+  scale. In 2016 UL amcatnlo DY, 16% of `genWeight` values are negative
+  and all have the same magnitude (about 1.7e4). Weighting each event by
+  σL/N (ignoring `genWeight`) overestimates the yield by Σ|w|/Σw ≈ 1.46.
+  Using `genWeight` _ σL/N is off by the weight magnitude, about 1.7e4.
+  Only `genWeight` _ σL / Σ genEventSumw is right. `N_EFF` from `sumw.py` is
   Σw²-based and is the right number for statistical power, not for
   normalisation.
 - **`--max-events` or a job that read part of a file**: Runs still holds the
@@ -198,6 +206,20 @@ publishes the CSV for each year.
   also change between versions (e.g. `Jet_btagDeepFlavB` in v9 against
   `Jet_btagPNetB` in Run 3 v12), so a keep list is version-specific: run
   `--dry-run` on one file of each campaign.
+- **Branch lists differ between files of one dataset**: in 2016G
+  SingleMuon one file has 1370 Events branches and others 1380. `skim.py`
+  takes the kept list from the first file and stops with "lacks branches"
+  if a later file misses one. Run one job per file, or keep only branches
+  present everywhere. `hadd` of skims with different branch lists fails.
+- **Several skims in parallel on a login node**: each `skim.py` holds
+  about 2 GB at `--step-size 100 MB`. Six at once on an 11 GB cmslpc node
+  were killed by the kernel ("Out of memory: Killed process ... python3",
+  the shell shows `Killed`). Use batch jobs, run two at a time, or lower
+  `--step-size`.
+- **`OSError: File did not vector_read properly: [ERROR] Operation expired`**:
+  an XRootD read timed out (busy node or EOS). The output file is
+  incomplete. Rerun that file's job; a skim without its `EVENTS_OUT=` line
+  on stdout did not finish.
 - **Overlapping primary datasets**: an event can be in both SingleMuon and
   SingleElectron (or DoubleMuon). Skimming them separately and adding
   double-counts. Apply the trigger-based veto in the analysis, not the skim.

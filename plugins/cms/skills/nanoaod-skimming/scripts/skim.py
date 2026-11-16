@@ -161,6 +161,11 @@ def main():
         for fn in files:
             with uproot.open(fn) as fin:
                 ev = fin["Events"]
+                absent = sorted(set(to_read) - set(ev.keys()))
+                if absent:
+                    log(f"ERROR: {fn} lacks branches {absent} that {files[0]} has; skim files of one "
+                        "campaign/era together, or drop these from --keep")
+                    return 1
                 stop = min(a.max_events, ev.num_entries) if a.max_events else None
                 partial = stop is not None and stop < ev.num_entries
                 seen = set()
@@ -169,7 +174,7 @@ def main():
                     n_in += n
                     sel = np.ones(n, bool)
                     if is_mc:
-                        sumw_read += float(ak.sum(arr["genWeight"]))
+                        sumw_read += float(np.sum(ak.to_numpy(arr["genWeight"]), dtype=np.float64))
                     if mask_fn is not None:
                         sel &= mask_fn(arr["run"], arr["luminosityBlock"])
                     n_lumi += int(sel.sum())
@@ -183,7 +188,7 @@ def main():
                     out = arr[sel]
                     n_out += len(out)
                     if is_mc:
-                        sumw_out += float(ak.sum(out["genWeight"]))
+                        sumw_out += float(np.sum(ak.to_numpy(out["genWeight"]), dtype=np.float64))
                     if len(out):
                         write_chunk(fout, "Events", to_writable(out, kept, counters))
                     log(f"  {fn.rsplit('/', 1)[-1]}: read {n_in} pass {n_out} ({time.time() - t0:.0f}s)")
@@ -206,7 +211,7 @@ def main():
     print(f"N_KEPT_BRANCHES={len(kept)}\nPARTIAL_FILES={int(bool(a.max_events))}")
     print(f"MISSING_PATTERNS={','.join(missing)}")
     if is_mc:
-        print(f"SUMW_READ={sumw_read:.6g}\nSUMW_OUT={sumw_out:.6g}")
+        print(f"SUMW_READ={sumw_read:.10g}\nSUMW_OUT={sumw_out:.10g}")
     return 0
 
 

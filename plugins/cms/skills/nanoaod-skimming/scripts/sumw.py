@@ -42,6 +42,9 @@ def main():
     lhe = {}
     for fn in expand(a.input):
         with uproot.open(fn) as f:
+            if "Runs" not in f:
+                print(f"ERROR: {fn}: no Runs tree (skim made without copying it?)", file=sys.stderr)
+                return 2
             r = f["Runs"].arrays(library="np")
         # NanoAOD v7 and older used a trailing underscore (genEventSumw_)
         get = lambda k: r[k] if k in r else r.get(k + "_")

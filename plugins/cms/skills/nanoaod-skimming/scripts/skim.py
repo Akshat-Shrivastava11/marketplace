@@ -7,6 +7,8 @@ Output: one ROOT file with Events (kept branches, NanoAOD naming, n<Coll>
 counters), Runs (unchanged, all entries) and LuminosityBlocks (lumi sections
 that were read, golden-JSON filtered for data).
 
+The output is written as <output>.part and renamed when the job succeeds.
+
 stdout: KEY=VALUE summary. stderr: progress. Exit codes: 0 ok, 1 runtime
 error, 2 bad arguments (unknown branch in --cut). --keep patterns that match
 nothing are listed in MISSING_PATTERNS (expected for MC-only branches on data).
@@ -20,6 +22,7 @@ Examples:
 import argparse
 import fnmatch
 import json
+import os
 import re
 import sys
 import time
@@ -82,7 +85,12 @@ class LumiMask:
 def to_writable(arrays, names, counters):
     """Group NanoAOD branches into records so uproot writes n<Coll> counters."""
     out, groups = {}, {}
+    jagged = {b for b in names if arrays[b].ndim > 1}
+    # uproot writes the n<Coll> counter itself: writing the input one too would clash
+    regenerated = {"n" + b for b in jagged} | {"n" + b.split("_", 1)[0] for b in jagged}
     for b in names:
+        if b in counters and b in regenerated:
+            continue
         coll = b.split("_", 1)[0]
         if "_" in b and ("n" + coll) in counters and arrays[b].ndim > 1:
             groups.setdefault(coll, {})[b.split("_", 1)[1]] = arrays[b]
@@ -157,7 +165,9 @@ def main():
     n_in = n_lumi = n_out = 0
     sumw_read = sumw_out = 0.0
     t0 = time.time()
-    with uproot.recreate(a.output) as fout:
+    tmp = a.output + ".part"  # renamed only on success, so a failed job leaves no <output>
+    any_partial = False
+    with uproot.recreate(tmp) as fout:
         for fn in files:
             with uproot.open(fn) as fin:
                 ev = fin["Events"]
@@ -165,9 +175,11 @@ def main():
                 if absent:
                     log(f"ERROR: {fn} lacks branches {absent} that {files[0]} has; skim files of one "
                         "campaign/era together, or drop these from --keep")
+                    os.remove(tmp)
                     return 1
                 stop = min(a.max_events, ev.num_entries) if a.max_events else None
                 partial = stop is not None and stop < ev.num_entries
+                any_partial |= partial
                 seen = set()
                 for arr in ev.iterate(to_read, step_size=a.step_size, entry_stop=stop, library="ak"):
                     n = len(arr)
@@ -206,9 +218,10 @@ def main():
         if "Events" not in fout:
             log("WARNING: no event passed; Events tree not written")
 
+    os.replace(tmp, a.output)
     print(f"OUTPUT={a.output}\nIS_MC={int(is_mc)}\nN_FILES={len(files)}")
     print(f"EVENTS_IN={n_in}\nEVENTS_AFTER_LUMIMASK={n_lumi}\nEVENTS_OUT={n_out}")
-    print(f"N_KEPT_BRANCHES={len(kept)}\nPARTIAL_FILES={int(bool(a.max_events))}")
+    print(f"N_KEPT_BRANCHES={len(kept)}\nPARTIAL_FILES={int(any_partial)}")
     print(f"MISSING_PATTERNS={','.join(missing)}")
     if is_mc:
         print(f"SUMW_READ={sumw_read:.10g}\nSUMW_OUT={sumw_out:.10g}")
@@ -219,4 +232,7 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:
+        sys.exit(1)
+    except Exception as e:  # e.g. XRootD timeout: report it, leave only <output>.part behind
+        log(f"ERROR: {type(e).__name__}: {e}")
         sys.exit(1)

@@ -148,5 +148,5 @@ Not tested for this skill: follow the package README for the release you use.
   the dataset's event count (`dasgoclient -query="summary dataset=..."`)
   finds jobs that read only part of their input.
 - Large central samples on the grid: CRAB with a NanoAOD input and a
-  script executable. See the CRAB skill when it is available in this
-  marketplace, or the CRAB tutorial.
+  script executable: see the `crab` skill (plugin `af-cern-lxplus`). On
+  lxplus use `lxplus-htcondor` in place of `lpc-condor`.

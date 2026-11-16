@@ -80,9 +80,7 @@ by a large factor.
 **divided by that file's `genEventSumw`**. To combine files, weight each by
 its `genEventSumw` (`sumw.py` does this). For the usual 9 scale weights the
 nominal (muR = muF = 1) is index 4 and the central PDF is index 0: both
-equal `SUMW` after combining, which is a quick check. The scale weights are then used to
-separate a normalisation effect from a shape effect, see the systematics
-skills.
+equal `SUMW` after combining, which is a quick check.
 
 **Luminosity.** The luminosity of a data skim is the sum, over the golden
 lumi sections that were actually processed, of the recorded luminosity
@@ -91,8 +89,8 @@ output LuminosityBlocks tree, so `lumi.py -i` on the skims gives the right
 number automatically. It counts each (run, lumi section) once, so a lumi
 section split across two input files is not double-counted. A skim's
 LuminosityBlocks lists every processed lumi section, including those where
-no event passed the cut, as it should. The year total (e.g. 36.31 /fb for 2016 UL) is only
-right when every file was processed.
+no event passed the cut, as it should. The year total (e.g. 36.31 /fb for
+2016 UL) is only right when every file was processed.
 
 ## Canonical Patterns
 
@@ -106,6 +104,7 @@ python3 scripts/skim.py -i $FILE -o x.root --keep-file keep.txt --dry-run   # pr
 Starting keep lists for common analyses are in
 [references/keep-lists-and-recipes.md](references/keep-lists-and-recipes.md).
 `run`, `luminosityBlock`, `event` and (MC) `genWeight` are always kept.
+Without `--keep` every branch is kept (a pure event skim).
 
 ### 2. Skim with uproot (no CMSSW needed)
 
@@ -125,7 +124,9 @@ Branches it needs are read even if not kept. Use `&`, `|`, `~` (not `and`,
 `--lumi-json` takes a local file (download the golden JSON first) and is
 ignored for MC. The output is a valid NanoAOD-style
 file: collections are written with `n<Coll>` counters, so ROOT, coffea's
-NanoEvents and the other skills read it unchanged.
+NanoEvents and the other skills read it unchanged. The counters come back
+as int32 where NanoAOD has uint32, with the same values. Naming a counter
+in `--keep` (`nMuon` with `Muon_*`) is allowed and not needed.
 
 Write the output locally (the job's working directory), then copy it:
 
@@ -145,7 +146,7 @@ Recipe with the Runs and LuminosityBlocks copy in
 One job per input file (or a few small files) keeps failures cheap. List
 files with `dasgoclient -query="file dataset=/SingleMuon/Run2016G-UL2016_MiniAODv2_NanoAODv9-v1/NANOAOD"`
 (CMS) or the Open Data file index. Submit with the `lpc-condor` skill on
-cmslpc, or CRAB for large central samples. Each job runs `skim.py` on its
+cmslpc, or the `crab` skill for large central samples. Each job runs `skim.py` on its
 files and `xrdcp`s the result to EOS. Keep each job's stdout: its
 `EVENTS_IN` total must equal the dataset's event count.
 
@@ -183,8 +184,8 @@ publishes the CSV for each year.
   scale. In 2016 UL amcatnlo DY, 16% of `genWeight` values are negative
   and all have the same magnitude (about 1.7e4). Weighting each event by
   σL/N (ignoring `genWeight`) overestimates the yield by Σ|w|/Σw ≈ 1.46.
-  Using `genWeight` _ σL/N is off by the weight magnitude, about 1.7e4.
-  Only `genWeight` _ σL / Σ genEventSumw is right. `N_EFF` from `sumw.py` is
+  Using `genWeight` × σL/N is off by the weight magnitude, about 1.7e4.
+  Only `genWeight` × σL / Σ genEventSumw is right. `N_EFF` from `sumw.py` is
   Σw²-based and is the right number for statistical power, not for
   normalisation.
 - **`--max-events` or a job that read part of a file**: Runs still holds the
@@ -193,8 +194,9 @@ publishes the CSV for each year.
   ship a partial skim. On a 100k-event test of a 1.4M-event DY file,
   `SUMW_READ` was 1.71e9 against 2.42e10 in Runs.
 - **Runs tree lost**: `RDataFrame.Snapshot` and many hand-written uproot
-  skims write only `Events`. `sumw.py` then exits 2 with
-  "Runs has no genEventSumw". Re-skim with the Runs copy.
+  skims write only `Events`. `sumw.py` then exits 2 with "no Runs tree".
+  Re-skim with the Runs copy. On a data file it exits 2 with
+  "Runs has no genEventSumw".
 - **Lumi of a partial data read**: `skim.py` keeps only the lumi sections
   it saw when `--max-events` is set, but the last one may be incomplete.
   Quote luminosity only from complete files.
@@ -217,9 +219,12 @@ publishes the CSV for each year.
   the shell shows `Killed`). Use batch jobs, run two at a time, or lower
   `--step-size`.
 - **`OSError: File did not vector_read properly: [ERROR] Operation expired`**:
-  an XRootD read timed out (busy node or EOS). The output file is
-  incomplete. Rerun that file's job; a skim without its `EVENTS_OUT=` line
-  on stdout did not finish.
+  an XRootD read timed out (busy node or EOS). `skim.py` exits 1 and
+  leaves only `<output>.part`, never `<output>`, so a merge cannot pick up
+  a half-written skim. Rerun that file's job.
+- **No event passes in one file**: the output has Runs and LuminosityBlocks
+  but no Events tree. That is correct and `hadd` (ROOT 6.38) merges it with
+  the others. Do not delete it: its Runs entry is part of the normalisation.
 - **Overlapping primary datasets**: an event can be in both SingleMuon and
   SingleElectron (or DoubleMuon). Skimming them separately and adding
   double-counts. Apply the trigger-based veto in the analysis, not the skim.
@@ -227,9 +232,6 @@ publishes the CSV for each year.
   (`{"Muon_pt": ..., "Muon_eta": ...}`) gets a counter per branch
   (`nMuon_pt`, `nMuon_eta`). Group by collection with `ak.zip` as `skim.py`
   does to get one `nMuon`.
-- **Preselection tighter than a systematic variation**: up-variations of
-  JEC or lepton scale move objects across thresholds. Leave a margin of a few
-  GeV, or rerun the skim with the variation if the margin is not enough.
 
 ## Reference Files
 

@@ -69,6 +69,9 @@ def main():
             files += [l.strip() for l in open(it[1:]) if l.strip()] if it.startswith("@") else [it]
         for fn in files:
             with uproot.open(fn) as f:
+                if "LuminosityBlocks" not in f:
+                    print(f"ERROR: {fn}: no LuminosityBlocks tree", file=sys.stderr)
+                    return 1
                 t = f["LuminosityBlocks"].arrays(["run", "luminosityBlock"], library="np")
             pairs.update(zip(t["run"].tolist(), t["luminosityBlock"].tolist()))
 
